@@ -9,7 +9,7 @@ __pycache__/
 *.pyc
 
 # Large predictions directories
-dream
+chrombpnet
 *test*
 *pred*
 
