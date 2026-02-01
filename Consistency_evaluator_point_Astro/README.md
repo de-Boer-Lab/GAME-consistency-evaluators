@@ -9,28 +9,32 @@ This evaluator:
 - Calculates Pearson correlation coefficient between forward and reverse complement predictions
 - Supports both JSON and MessagePack data formats
 
-### Container Build
-
-```bash
-# Build the Apptainer container
-apptainer build consistency_point_astro_evaluator.sif evaluator.def
-```
+To get started with running the pre-built container, download from the following link: https://zenodo.org/records/18182295
 
 ### Running with Container
 
 ```bash
-apptainer run \
-  --bind /path/to/evaluator_data:/evaluator_data \
-  --bind /path/to/output:/predictions \
+apptainer run --containall \
+  --B /path/to/evaluator_data:/evaluator_data \
+  --B /path/to/output:/predictions \
   consistency_point_astro_evaluator.sif <predictor_ip> <predictor_port> /predictions
 ```
 
 **Example:**
 ```bash
-apptainer run \
-  --bind ./evaluator_data:/evaluator_data \
-  --bind ./results:/predictions \
+apptainer run --containall \
+  --B ./evaluator_data:/evaluator_data \
+  --B ./results:/predictions \
   consistency_point_astro_evaluator.sif 192.168.1.100 8000 /predictions
+```
+
+If you would like to re-build the container, edit corresponding paths in the .def file and build using the command below. Please make sure to follow the directory stucture shown below. 
+
+### Container Build
+
+```bash
+# Build the Apptainer container
+apptainer build consistency_point_astro_evaluator.sif evaluator.def
 ```
 
 ## Output Files
