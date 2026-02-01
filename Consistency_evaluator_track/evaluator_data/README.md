@@ -1,1 +1,1 @@
-Please refer to documentation here: <LINK>
+[Please refer to documentation here](../../Consistency_evaluator_point/evaluator_data/README.md) 
