@@ -2,12 +2,11 @@
 
 import os
 import json
-import msgpack
 from collections import Counter
 import functools
 import pandas as pd
 
-from config import EVALUATOR_INPUT_PATH, input_file
+from config import EVALUATOR_INPUT_PATH
 
 class DuplicateKeysError(ValueError):
     """Raised when duplicate keys are found in a JSON object."""
@@ -139,6 +138,13 @@ def check_duplicates_from_json(json_file_path):
 
 
 def create_json_from_tsv():
+    """
+    Build the Evaluator request dict from the consistency input file.
+
+    The input file (named .csv but tab-delimited) has a leading row-index column
+    followed by two columns: the sequence id and the sequence. Forward and
+    reverse-complement entries share a base id; RC entries carry a trailing '_RC'
+    """
 
     # Validate evaluator input file exists
     if not os.path.exists(EVALUATOR_INPUT_PATH):
@@ -149,10 +155,24 @@ def create_json_from_tsv():
         sequence_dataFrame = pd.read_csv(EVALUATOR_INPUT_PATH, sep='\t', index_col=0)
         print(sequence_dataFrame)
         sequence_dataFrame.columns = ['seq_name', 'sequence']
+        
+        # Sequence ids must be unique. dict(zip(...)) below would silently drop
+        # collisions and throw off the prediction-count check, so flag them up front
+        id_counts = sequence_dataFrame['seq_name'].value_counts()
+        duplicates = id_counts[id_counts > 1]
+        if not duplicates.empty:
+            raise DuplicateKeysError(
+                "Duplicate sequence ids found:\n" +
+                "\n".join(f"Key: '{k}', Count: {c}" for k, c in duplicates.items())
+            )
 
-
-        # Define the prediction tasks as a separate variable
-        prediction_tasks = [
+        # Define the prediction tasks as JSON TEXT (not a Python list of dicts) so the
+        # duplicate-key check below actually does something. A Python dict literal
+        # collapses repeated keys before any check could see them, so authoring this as
+        # a string is what lets check_duplicates_from_string catch a stray duplicate
+        # inside a task object (e.g. two "cell_type" entries)
+        prediction_tasks_str = """
+        [
             {
                 "name": "consistency_K562",
                 "type": "accessibility",
@@ -160,6 +180,10 @@ def create_json_from_tsv():
                 "species": "homo_sapiens"
             }
         ]
+        """
+        # Real metadata check: parses the text and raises on any duplicated task key
+        prediction_tasks = check_duplicates_from_string(prediction_tasks_str)
+        
         sequence_dict = dict(zip(sequence_dataFrame.seq_name, sequence_dataFrame.sequence))
 
         # Build the JSON evaluator object
@@ -171,7 +195,7 @@ def create_json_from_tsv():
         
         # Convert the dictionary to a JSON string with indentation for readability
         json_string = json.dumps(evaluator_dict)
-        data_dict = check_duplicates_from_string(json_string)
+        data_dict = check_duplicates_from_string(json_string) # This ain't doin' no'in -- redundant but left in
         #print(json_string)
         return data_dict
     
