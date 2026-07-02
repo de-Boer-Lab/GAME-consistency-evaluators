@@ -1,0 +1,61 @@
+Bootstrap: docker
+From: python:3.13-slim
+
+%files
+    ./config.py /Consistency_evaluator_point_Astro/config.py
+    ./data_loader.py /Consistency_evaluator_point_Astro/data_loader.py
+    ./evaluator_content_handler.py /Consistency_evaluator_point_Astro/evaluator_content_handler.py 
+    ./evaluator_metrics_calculator.py /Consistency_evaluator_point_Astro/evaluator_metrics_calculator.py
+    ./consistency_evaluator_RestAPI.py /Consistency_evaluator_point_Astro/consistency_evaluator_RestAPI.py
+
+%environment
+    export APPTAINER_NO_MOUNT="home,tmp,proc,sys,dev"
+    export LC_ALL=C
+    export PYTHONPATH="/Consistency_evaluator_point_Astro:$PYTHONPATH"
+    
+%post
+    # Install system packages and dependencies
+    echo "Installing system dependencies..."
+    apt-get update && \
+    apt-get install -y --no-install-recommends python3-pip bzip2 ca-certificates && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+    echo "Installing Python dependencies..."
+    python -m pip install --upgrade pip
+    python -m pip install --no-cache-dir numpy tqdm pandas msgpack scipy requests
+    
+    # Set permissions to access all directories
+    echo "Setting permissions for directories and script..."
+    chmod -R 755 //Consistency_evaluator_point_Astro/
+
+%runscript
+    exec python3 /Consistency_evaluator_point_Astro/consistency_evaluator_RestAPI.py "$@"
+
+%startscript
+    exec python3 /Consistency_evaluator_point_Astro/consistency_evaluator_RestAPI.py "$@"
+
+%labels
+    Authors "Ishika Luthra, Satyam Priyadarshi"
+    game_schema_version "1.0"
+    Description "Consistency Evaluator (Point Requests for Astrocyte) for the GAME framework"
+
+%help
+    Consistency Evaluator (Point Requests for Astrocyte) for the GAME framework.
+
+    This is a machine-to-machine Evaluator (client). It sends a structured request of
+    sequences to a running Predictor (server), receives the point predictions, 
+    and scores reverse-complement (RC) self-consistency: for each sequence S
+    it correlates the prediction for S against the prediction for RC(S) using Pearson r.
+
+    Run:
+        ```
+        apptainer run \
+          -B /abs/path/to/evaluator_data:/evaluator_data \
+          -B /abs/path/to/predictions:/predictions \
+          consistency_point_astro_evaluator.sif PREDICTOR_HOST PREDICTOR_PORT /predictions
+        ```
+
+    Arguments:
+        1. `PREDICTOR_HOST` : IP address or hostname of the Predictor server
+        2. `PREDICTOR_PORT` : Port the Predictor is listening on
+        3. `/predictions`   : Mounted path inside the container for per-gene predictions + summary CSV.
