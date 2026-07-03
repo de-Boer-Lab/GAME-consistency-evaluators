@@ -1,1 +1,0 @@
-[Please refer to documentation here](../../Consistency_evaluator_point/evaluator_data/README.md) 

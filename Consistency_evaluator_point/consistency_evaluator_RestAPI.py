@@ -2,24 +2,17 @@ import os
 import sys
 import json
 from requests.exceptions import RequestException, HTTPError
-import time
-import tqdm
-import struct
-import socket
-import pandas as pd
-from datetime import datetime, timezone
-
 
 import config
 from data_loader import create_json_from_tsv
-from evaluator_content_handler import *
+from evaluator_content_handler import negotiate_formats, get_predictions, deserialize_response
 import evaluator_metrics_calculator
 
 
 def run_evaluator(predictor_ip, predictor_port, output_dir):
     """
-    Preprocesses the data, sends request, receives response,
-    saves the response, and returns file path.
+    Preprocess the data, negotiate formats, send the request, save the response,
+    and (on a 200 OK with a complete prediction set) calculate and save metrics
     """
     
     # Validate output directory exists; create if it does not
@@ -46,7 +39,6 @@ def run_evaluator(predictor_ip, predictor_port, output_dir):
         
         # This call will return a 200 OK response OR raise HTTPError (4xx/5xx)
         response = get_predictions(predictor_url, data_dict, req_fmt, resp_fmt)
-        
         is_success_response = True
         print("Predictor returned 200 OK.")
         response_payload = deserialize_response(response, resp_fmt)
@@ -82,10 +74,13 @@ def run_evaluator(predictor_ip, predictor_port, output_dir):
         
     # Check sequence counts before saving
     for i, task in enumerate(response_payload.get("prediction_tasks", []), start=1):
-        preds = task.get("predictions", [])
+        preds = task.get("predictions", {})
+        if "error" in preds:
+            continue
         if len(preds) != total_sequences:
-            print(f"Warning: Task {i} ('{task.get('name')}') has {len(preds)} predictions, but {total_sequences} sequences were sent to the Predictor.")
-    
+            print(f"Warning: Task {i} ('{task.get('name')}') has {len(preds)} predictions, "
+                  f"but {total_sequences} sequences were sent to the Predictor.")
+
     try:
         with open(saved_predictions_path, 'w', encoding='utf-8') as f:
             json.dump(response_payload, f, ensure_ascii=False, indent=4)
@@ -94,20 +89,22 @@ def run_evaluator(predictor_ip, predictor_port, output_dir):
         print(f"FATAL: Could not save predictions to {saved_predictions_path}. {e}", file=sys.stderr)
         return
 
- # Calculate and save final metrics
+    # Calculate and save final metrics
     if is_success_response:
         all_lengths_match = True
-        #Loop through and check all the prediction tasks
+        # Loop through and check all the prediction tasks
         for i, task in enumerate(response_payload.get("prediction_tasks", []), start=1):
-            preds = task.get("predictions", [])
-            #If there is an error key in one of the predictions don't check length of predictions
+            preds = task.get("predictions", {})
+            # If this task has an error key, skip length validation for it
             if "error" in preds:
-                all_lengths_match = True
-            #Otherwise length of predictions needs to == the # of sequences
+                print(f"Task {i} ('{task.get('name')}') returned an error -- skipping length check.")
+                continue
+            # Otherwise length of predictions needs to == the # of sequences
             if len(preds) != total_sequences:
-                print(f"Warning: Task {i} ('{task.get('name')}') has {len(preds)} predictions, but {total_sequences} sequences were sent to the Predictor.")
+                print(f"Warning: Task {i} ('{task.get('name')}') has {len(preds)} predictions, "
+                      f"but {total_sequences} sequences were sent to the Predictor.")
                 all_lengths_match = False
-        if all_lengths_match:    
+        if all_lengths_match:
             evaluator_metrics_calculator.calculate_and_save_metrics(saved_predictions_path, output_dir)
         else:
             print("Skipping metric calculation because not all sequences got predictions.")
@@ -116,10 +113,11 @@ def run_evaluator(predictor_ip, predictor_port, output_dir):
 
 
 if __name__ == '__main__':
-    # Check that mandatory arguments are passed to the script
-    # if len(sys.argv) != 4:
-    #     print(f"Invalid arguments! Arguments must have: <container image/python script> <predictor_ip_address> <predictor_port> <mounted_output_directory>")
-    #     sys.exit(1)
+    # Mandatory arguments
+    if len(sys.argv) != 4:
+        print("Invalid arguments! Usage: <container image/python script> "
+              "<predictor_ip_address> <predictor_port> <mounted_output_directory>")
+        sys.exit(1)
     
     # Call Evaluator here
     predictor_ip = sys.argv[1]
@@ -127,15 +125,16 @@ if __name__ == '__main__':
     output_dir_arg = sys.argv[3]
     
     try:
-        run_evaluator(predictor_ip, int(predictor_port), output_dir_arg)
+        run_evaluator(predictor_ip, predictor_port, output_dir_arg)
         print("Evaluation complete.")
         sys.exit(0)
-        
+
     except (FileNotFoundError, ValueError) as e:
         print(f"FATAL ERROR (Data): {e}", file=sys.stderr)
         sys.exit(1)
-    except RequestException as e:
-        print(f"FATAL ERROR (Network): Could not connect to predictor at http://{predictor_ip}:{predictor_port}.", file=sys.stderr)
+    except RequestException:
+        print(f"FATAL ERROR (Network): Could not connect to predictor at "
+              f"http://{predictor_ip}:{predictor_port}.", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"An unexpected fatal error occurred: {e}", file=sys.stderr)
