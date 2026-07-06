@@ -9,7 +9,7 @@ This evaluator:
 - Calculates Pearson correlation coefficient between forward and reverse complement predictions
 - Supports both JSON and MessagePack data formats
 
-To get started with running the pre-built container, download from the following link: https://zenodo.org/records/18182295
+To get started with running the pre-built container, download from Hugging Face: https://huggingface.co/datasets/deBoerLab/Consistency_Point_K562_GAME
 
 ### Running with Container
 

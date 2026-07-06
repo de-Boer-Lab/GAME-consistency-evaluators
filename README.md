@@ -6,7 +6,11 @@ Using these same set of sequences we designed three Evaluators, two for K562 cel
 
 ## Usage: 
 
-Prebuilt containers can be downloaded from Zenodo: https://zenodo.org/records/18182295
+Prebuilt containers can be downloaded from Hugging Face:
+
+- Consistency Point Request (K562, homo_sapiens): https://huggingface.co/datasets/deBoerLab/Consistency_Point_K562_GAME
+- Consistency Track Request (K562, homo_sapiens): https://huggingface.co/datasets/deBoerLab/Consistency_Track__GAME
+- Consistency Point Request (Astro, mus_musculus): https://huggingface.co/datasets/deBoerLab/Consistency_Point_Astro_GAME
 
 ```bash
 apptainer run --containall \
