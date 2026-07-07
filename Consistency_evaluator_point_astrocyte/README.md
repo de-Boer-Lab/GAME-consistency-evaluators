@@ -117,7 +117,7 @@ Measures the correlation between forward sequence point predictions and their re
 ## Directory Structure
 
 ```
-Consistency_evaluator_point/
+Consistency_evaluator_point_astrocyte/
 ├── config.py                           # Configuration settings
 ├── consistency_evaluator_RestAPI.py     # Main evaluator script
 ├── data_loader.py                       # Input data loading and validation
