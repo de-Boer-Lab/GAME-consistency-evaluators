@@ -4,13 +4,16 @@ To evaluate whether models were internally consistent in their predictions, we c
 
 Using these same set of sequences we designed three Evaluators, two for K562 cell type in Homo sapiens (point and track request) and the third for "Astro" (Astrocytes) cell type in Mus musculus (point request). Users can re-build similar Evaluators for any cell type of interes using the code in the corresponding folders. For point requests, the Pearson correlation (r) was calculated between the single predicted values for forward and reverse complement sequence predictions. For track requests, the Evaluator calculates the Pearson correlation between the forward predictions and the reversed reverse complement predictions for each sequence. The final metric is reported as the mean of the correlations across pairs. 
 
+## Important Links
+
+- Main GAME Repository: [de-Boer-Lab/Genomic-API-for-Model-Evaluation](https://github.com/de-Boer-Lab/Genomic-API-for-Model-Evaluation)
+- GAME Documentation: [ReadTheDocs](https://genomic-api-for-model-evaluation-documentation.readthedocs.io)
+- Pre-built Evaluator container images: Hugging Face — [Point (K562, homo_sapiens)](https://huggingface.co/datasets/deBoerLab/Consistency_Point_K562_GAME), [Track (K562, homo_sapiens)](https://huggingface.co/datasets/deBoerLab/Consistency_Track__GAME), [Point (Astro, mus_musculus)](https://huggingface.co/datasets/deBoerLab/Consistency_Point_Astro_GAME)
+- List of all [GAME Modules](https://github.com/de-Boer-Lab/GAME_modules)
+
 ## Usage: 
 
-Prebuilt containers can be downloaded from Hugging Face:
-
-- Consistency Point Request (K562, homo_sapiens): https://huggingface.co/datasets/deBoerLab/Consistency_Point_K562_GAME
-- Consistency Track Request (K562, homo_sapiens): https://huggingface.co/datasets/deBoerLab/Consistency_Track__GAME
-- Consistency Point Request (Astro, mus_musculus): https://huggingface.co/datasets/deBoerLab/Consistency_Point_Astro_GAME
+Prebuilt containers can be downloaded from Hugging Face (see [Important Links](#important-links) above):
 
 ```bash
 apptainer run --containall \
