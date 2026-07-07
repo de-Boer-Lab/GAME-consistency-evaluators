@@ -2,6 +2,13 @@
 
 A genomic sequence Evaluator that tests consistency of predictions between forward sequences and their reverse complements. This Evaluator requests point chromatin accessibility predictions for Astro cell type (mus_musculus) and calculates Pearson correlation as a metric of Predictor reliability.
 
+## Important Links
+
+- Main GAME Repository: [de-Boer-Lab/Genomic-API-for-Model-Evaluation](https://github.com/de-Boer-Lab/Genomic-API-for-Model-Evaluation)
+- GAME Documentation: [ReadTheDocs](https://genomic-api-for-model-evaluation-documentation.readthedocs.io)
+- Pre-built Evaluator container image: [Hugging Face](https://huggingface.co/datasets/deBoerLab/Consistency_Point_Astro_GAME)
+- List of all [GAME Modules](https://github.com/de-Boer-Lab/GAME_modules)
+
 ## Overview
 
 This evaluator:
@@ -9,7 +16,7 @@ This evaluator:
 - Calculates Pearson correlation coefficient between forward and reverse complement predictions
 - Supports both JSON and MessagePack data formats
 
-To get started with running the pre-built container, download from the following link: https://zenodo.org/records/18182295
+To get started with running the pre-built container, download from Hugging Face (see [Important Links](#important-links) above).
 
 ### Running with Container
 
